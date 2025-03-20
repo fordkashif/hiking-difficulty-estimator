@@ -62,7 +62,10 @@ export function DifficultyResult({ difficulty, parameters }: DifficultyResultPro
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium">Trail Difficulty</h3>
-        <Badge className={`text-sm px-3 py-1 ${difficultyColors[difficulty]}`}>
+        <Badge
+          className={`text-sm px-3 py-1 ${difficultyColors[difficulty]} hover:bg-opacity-100 hover:text-opacity-100`}
+          variant="outline"
+        >
           <span className="flex items-center gap-1">
             {difficultyIcons[difficulty]}
             {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
