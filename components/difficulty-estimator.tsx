@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,7 +15,9 @@ import { Mountain, Ruler, Compass } from "lucide-react"
 
 export function DifficultyEstimator() {
   const [elevationGain, setElevationGain] = useState<number>(500)
+  const [elevationInputValue, setElevationInputValue] = useState<string>("500")
   const [distance, setDistance] = useState<number>(5)
+  const [distanceInputValue, setDistanceInputValue] = useState<string>("5")
   const [terrain, setTerrain] = useState<TerrainType>("moderate")
   const [units, setUnits] = useState<"imperial" | "metric">("imperial")
   const [result, setResult] = useState<DifficultyLevel | null>(null)
@@ -26,6 +30,36 @@ export function DifficultyEstimator() {
       units,
     })
     setResult(difficulty)
+  }
+
+  const handleElevationChange = (value: number) => {
+    setElevationGain(value)
+    setElevationInputValue(value.toString())
+  }
+
+  const handleElevationInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setElevationInputValue(value)
+    if (value === "") {
+      setElevationGain(0)
+    } else {
+      setElevationGain(Number(value))
+    }
+  }
+
+  const handleDistanceChange = (value: number) => {
+    setDistance(value)
+    setDistanceInputValue(value.toString())
+  }
+
+  const handleDistanceInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setDistanceInputValue(value)
+    if (value === "") {
+      setDistance(0)
+    } else {
+      setDistance(Number(value))
+    }
   }
 
   const elevationUnit = units === "imperial" ? "ft" : "m"
@@ -63,14 +97,14 @@ export function DifficultyEstimator() {
               max={units === "imperial" ? 5000 : 1500}
               step={units === "imperial" ? 100 : 50}
               value={[elevationGain]}
-              onValueChange={(value) => setElevationGain(value[0])}
+              onValueChange={(value) => handleElevationChange(value[0])}
               className="flex-1"
             />
             <Input
               id="elevation-gain"
               type="number"
-              value={elevationGain}
-              onChange={(e) => setElevationGain(Number(e.target.value))}
+              value={elevationInputValue}
+              onChange={handleElevationInputChange}
               className="w-20"
             />
           </div>
@@ -88,14 +122,14 @@ export function DifficultyEstimator() {
               max={units === "imperial" ? 20 : 30}
               step={0.5}
               value={[distance]}
-              onValueChange={(value) => setDistance(value[0])}
+              onValueChange={(value) => handleDistanceChange(value[0])}
               className="flex-1"
             />
             <Input
               id="distance"
               type="number"
-              value={distance}
-              onChange={(e) => setDistance(Number(e.target.value))}
+              value={distanceInputValue}
+              onChange={handleDistanceInputChange}
               className="w-20"
               step={0.1}
             />
