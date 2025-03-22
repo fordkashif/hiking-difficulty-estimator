@@ -6,6 +6,7 @@ interface DifficultyParams {
   distance: number
   terrain: TerrainType
   units: "imperial" | "metric"
+  fitnessLevel?: number
 }
 
 export function getTerrainFactor(terrain: TerrainType): number {
@@ -24,7 +25,7 @@ export function getTerrainFactor(terrain: TerrainType): number {
 }
 
 export function calculateDifficulty(params: DifficultyParams): DifficultyLevel {
-  const { elevationGain, distance, terrain, units } = params
+  const { elevationGain, distance, terrain, units, fitnessLevel = 3 } = params
 
   // Convert to imperial if needed for consistent calculation
   const normalizedElevation = units === "metric" ? elevationGain * 3.28084 : elevationGain
@@ -63,6 +64,10 @@ export function calculateDifficulty(params: DifficultyParams): DifficultyLevel {
 
   // Apply terrain factor
   difficultyScore = difficultyScore * terrainFactor
+
+  // Apply fitness adjustment (higher fitness = lower difficulty)
+  const fitnessAdjustment = (fitnessLevel - 3) * 0.5 // 0.5 points per level from baseline of 3
+  difficultyScore = Math.max(difficultyScore - fitnessAdjustment, 1)
 
   // Determine difficulty level
   if (difficultyScore < 4) {

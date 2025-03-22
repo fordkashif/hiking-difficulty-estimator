@@ -9,11 +9,12 @@ interface DifficultyResultProps {
     distance: number
     terrain: TerrainType
     units: "imperial" | "metric"
+    fitnessLevel: number
   }
 }
 
 export function DifficultyResult({ difficulty, parameters }: DifficultyResultProps) {
-  const { elevationGain, distance, terrain, units } = parameters
+  const { elevationGain, distance, terrain, units, fitnessLevel } = parameters
 
   const difficultyColors = {
     easy: "bg-green-100 text-green-800 border-green-200",
@@ -48,15 +49,35 @@ export function DifficultyResult({ difficulty, parameters }: DifficultyResultPro
     extreme: units === "imperial" ? 0.75 : 1.2,
   }
 
+  // Apply fitness adjustment to speed factor (higher fitness = faster pace)
+  const fitnessAdjustment = (fitnessLevel - 3) * 0.1 // 10% adjustment per level from baseline of 3
+  const adjustedSpeedFactor = speedFactor[difficulty] * (1 + fitnessAdjustment)
+
   const elevationFactor = elevationGain / (units === "imperial" ? 1000 : 300)
   const terrainMultiplier = getTerrainFactor(terrain)
 
   // Time in hours
-  const estimatedTime = distance / speedFactor[difficulty] + elevationFactor * 0.5 * terrainMultiplier
+  const estimatedTime = distance / adjustedSpeedFactor + elevationFactor * 0.5 * terrainMultiplier
 
   // Convert to hours and minutes
   const hours = Math.floor(estimatedTime)
   const minutes = Math.round((estimatedTime - hours) * 60)
+
+  // Calculate calories burned (rough estimate)
+  // MET values for different hiking intensities
+  const metValues = {
+    easy: 4.0,
+    moderate: 5.3,
+    challenging: 6.5,
+    difficult: 7.8,
+    extreme: 9.0,
+  }
+
+  // Assume average weight of 70kg (154 lbs)
+  const avgWeight = 70
+
+  // Calories = MET * weight in kg * time in hours
+  const caloriesBurned = Math.round(metValues[difficulty] * avgWeight * estimatedTime)
 
   return (
     <div className="space-y-4">
@@ -86,8 +107,16 @@ export function DifficultyResult({ difficulty, parameters }: DifficultyResultPro
         <div>
           <p className="text-sm text-gray-500">Difficulty Score</p>
           <p className="font-medium">
-            {calculateDifficultyScore(elevationGain, distance, terrain, units).toFixed(1)}/10
+            {calculateDifficultyScore(elevationGain, distance, terrain, units, fitnessLevel).toFixed(1)}/10
           </p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">Est. Calories</p>
+          <p className="font-medium">{caloriesBurned} kcal</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">Fitness Adjustment</p>
+          <p className="font-medium">{fitnessLevel}/5</p>
         </div>
       </div>
     </div>
@@ -99,6 +128,7 @@ function calculateDifficultyScore(
   distance: number,
   terrain: TerrainType,
   units: "imperial" | "metric",
+  fitnessLevel: number,
 ): number {
   // Normalize values to a 0-10 scale
   const maxElevation = units === "imperial" ? 5000 : 1500
@@ -114,8 +144,12 @@ function calculateDifficultyScore(
   }[terrain]
 
   // Weight the factors
-  const weightedScore = elevationScore * 0.4 + distanceScore * 0.3 + terrainScore * 0.3
+  const rawScore = elevationScore * 0.4 + distanceScore * 0.3 + terrainScore * 0.3
 
-  return Math.min(Math.max(weightedScore, 1), 10)
+  // Apply fitness adjustment (higher fitness = lower difficulty)
+  const fitnessAdjustment = (fitnessLevel - 3) * 0.5 // 0.5 points per level from baseline of 3
+  const adjustedScore = rawScore - fitnessAdjustment
+
+  return Math.min(Math.max(adjustedScore, 1), 10)
 }
 
